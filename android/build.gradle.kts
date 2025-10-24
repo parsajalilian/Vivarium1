@@ -1,28 +1,37 @@
-// <<<<<<< 1. دو خط import زیر اضافه شده است >>>>>>>>>
 import java.util.Properties
 import java.io.FileInputStream
+
+// <<<<<<< 1. این قسمت برای خواندن local.properties اضافه شده است >>>>>>>>>
+val localPropertiesFile = rootProject.file("../android/local.properties")
+val localProperties = Properties()
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+// <<<<<<< پایان قسمت 1 >>>>>>>>>
+
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    // id("dev.flutter.flutter-gradle-plugin") // <<<<<<<<<< این خط برای رفع خطا حذف شد
+    // id("dev.flutter.flutter-gradle-plugin") // این خط همانطور که گفتیم حذف می‌ماند
 }
 
-// <<<<<<< 2. این بلوک با سینتکس Kotlin بازنویسی شده است >>>>>>>>>
-// کد خواندن فایل key.properties
+// <<<<<<< 2. این قسمت برای خواندن key.properties (امضا) است >>>>>>>>>
 val keystorePropertiesFile = rootProject.file("../android/key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
-// <<<<<<< پایان تغییر 2 >>>>>>>>>
+// <<<<<<< پایان قسمت 2 >>>>>>>>>
 
 
 android {
     namespace = "com.example.aquaviva"
-    compileSdk = 35
-    ndkVersion = flutter.ndkVersion
+
+    // <<<<<<< 3. مقادیر از local.properties خوانده می‌شوند >>>>>>>>>
+    compileSdk = 35 // این مقدار ثابت است
+    ndkVersion = localProperties.getProperty("flutter.ndkVersion")
+    // <<<<<<< پایان قسمت 3 >>>>>>>>>
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -34,17 +43,17 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.aquaviva"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+
+        // <<<<<<< 4. مقادیر از local.properties خوانده می‌شوند >>>>>>>>>
+        minSdk = localProperties.getProperty("flutter.minSdkVersion").toInt()
+        targetSdk = localProperties.getProperty("flutter.targetSdkVersion").toInt()
+        versionCode = localProperties.getProperty("flutter.versionCode").toInt()
+        versionName = localProperties.getProperty("flutter.versionName")
+        // <<<<<<< پایان قسمت 4 >>>>>>>>>
     }
 
-    // <<<<<<< 3. این بلوک با سینتکس Kotlin اضافه شده است >>>>>>>>>
+    // <<<<<<< 5. قسمت امضا (این قسمت صحیح بود) >>>>>>>>>
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {
@@ -55,20 +64,16 @@ android {
             }
         }
     }
-    // <<<<<<< پایان تغییر 3 >>>>>>>>>
+    // <<<<<<< پایان قسمت 5 >>>>>>>>>
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-
-            // <<<<<<< 4. این خط برای استفاده از امضای release تغییر کرده است >>>>>>>>>
-            // signingConfig = signingConfigs.getByName("debug") // خط قبلی
-            signingConfig = signingConfigs.getByName("release") // خط جدید
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
 
-flutter {
-    source = "../.."
-}
+// <<<<<<< 6. بلوک flutter { ... } در این ساختار جدید حذف می‌شود >>>>>>>>>
+// flutter {
+//     source = "../.."
+// }
