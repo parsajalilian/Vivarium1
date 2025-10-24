@@ -14,23 +14,24 @@ workflows:
           flutter clean
           flutter pub get
 
-          # بازسازی فایل‌های Flutter قبل از ورود به ios
-          rm -rf ios/Flutter/Flutter.podspec
-          flutter pub run flutter_launcher_icons  true
-          flutter pub run build_runner build --delete-conflicting-outputs  true
+          # اگر از build_runner استفاده می‌کنی، فایل‌های جنریت شده رو بازسازی کن
+          if grep -q "build_runner" pubspec.yaml; then
+            flutter pub run build_runner build --delete-conflicting-outputs || true
+          fi
+
           flutter pub get
           flutter precache --ios
 
           cd ios
 
-          # تنظیم نسخه iOS حداقل 13.0
+          # تنظیم حداقل نسخه iOS
           if grep -Eq "^[[:space:]]*platform :ios" Podfile; then
             sed -E -i '' "s/^[[:space:]]*platform :ios.*/platform :ios, '13.0'/" Podfile
           else
             (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
 
-          # افزودن تنظیمات سازگاری CocoaPods و فریم‌ورک‌ها
+          # اطمینان از وجود تنظیمات CocoaPods برای پلاگین‌های Swift
           if ! grep -q "install! 'cocoapods'" Podfile; then
             printf "\ninstall! 'cocoapods', :disable_input_output_paths => true\n" >> Podfile
           fi
@@ -41,13 +42,13 @@ workflows:
             printf "\nuse_modular_headers!\n" >> Podfile
           fi
 
-          # پاکسازی و نصب مجدد پادها
+          # پاک‌سازی و نصب مجدد پادها
           rm -rf Podfile.lock Pods
           pod cache clean --all
           pod repo update
           pod install --repo-update
 
-          # ایجاد Bridging Header اگر وجود ندارد
+          # ساخت فایل Bridging Header اگر وجود ندارد
           if [ ! -f "Runner/Runner-Bridging-Header.h" ]; then
             echo "// Auto-created Bridging Header for Swift Plugins" > Runner/Runner-Bridging-Header.h
             echo "#import \"GeneratedPluginRegistrant.h\"" >> Runner/Runner-Bridging-Header.h
@@ -59,16 +60,13 @@ workflows:
         script: |
           set -e
           set -x
-
           export FLUTTER_ROOT="$(flutter sdk-path)"
           export PATH="$FLUTTER_ROOT/bin:$PATH"
 
           flutter build bundle
-
-          # حذف بیلدهای قبلی
           rm -rf build/ios/Release-iphoneos
 
-          # بیلد با Xcode بدون ساین
+          # ساخت خروجی Xcode بدون نیاز به Apple ID
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
