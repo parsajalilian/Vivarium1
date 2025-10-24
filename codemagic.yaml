@@ -4,8 +4,9 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
+
     scripts:
-      - name: Prepare (Flutter + CocoaPods full clean)
+      - name: Prepare (Flutter clean + CocoaPods rebuild)
         script: |
           set -e
           set -x
@@ -13,16 +14,26 @@ workflows:
           flutter clean
           flutter pub get
 
+          # بازسازی فایل‌های Flutter قبل از ورود به ios
+          rm -rf ios/Flutter/Flutter.podspec
+          flutter pub run flutter_launcher_icons  true
+          flutter pub run build_runner build --delete-conflicting-outputs  true
+          flutter pub get
+          flutter precache --ios
+
           cd ios
 
-          # تنظیم حداقل نسخه iOS
+          # تنظیم نسخه iOS حداقل 13.0
           if grep -Eq "^[[:space:]]*platform :ios" Podfile; then
             sed -E -i '' "s/^[[:space:]]*platform :ios.*/platform :ios, '13.0'/" Podfile
           else
             (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
 
-          # افزودن use_frameworks و use_modular_headers با خط واقعی
+          # افزودن تنظیمات سازگاری CocoaPods و فریم‌ورک‌ها
+          if ! grep -q "install! 'cocoapods'" Podfile; then
+            printf "\ninstall! 'cocoapods', :disable_input_output_paths => true\n" >> Podfile
+          fi
           if ! grep -q "use_frameworks!" Podfile; then
             printf "\nuse_frameworks!\n" >> Podfile
           fi
@@ -30,13 +41,13 @@ workflows:
             printf "\nuse_modular_headers!\n" >> Podfile
           fi
 
-          # پاک‌سازی کامل پادها و کش‌ها
+          # پاکسازی و نصب مجدد پادها
           rm -rf Podfile.lock Pods
           pod cache clean --all
           pod repo update
           pod install --repo-update
 
-          # ساخت فایل Bridging Header اگر وجود ندارد
+          # ایجاد Bridging Header اگر وجود ندارد
           if [ ! -f "Runner/Runner-Bridging-Header.h" ]; then
             echo "// Auto-created Bridging Header for Swift Plugins" > Runner/Runner-Bridging-Header.h
             echo "#import \"GeneratedPluginRegistrant.h\"" >> Runner/Runner-Bridging-Header.h
@@ -44,14 +55,20 @@ workflows:
 
           cd ..
 
-      - name: Build Runner.app (no code signing)
+      - name: Build Runner.app (unsigned)
         script: |
           set -e
           set -x
 
-          # ساخت اپ بدون امضا با Xcode
+          export FLUTTER_ROOT="$(flutter sdk-path)"
+          export PATH="$FLUTTER_ROOT/bin:$PATH"
+
           flutter build bundle
+
+          # حذف بیلدهای قبلی
           rm -rf build/ios/Release-iphoneos
+
+          # بیلد با Xcode بدون ساین
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
