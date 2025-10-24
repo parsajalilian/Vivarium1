@@ -14,13 +14,12 @@ workflows:
           cd ..
       - name: Build Xcode Archive (and ignore expected export error)
         script: |
-          # این دستور آرشیو را با موفقیت می‌سازد
-          # اما در مرحله Export شکست می‌خورد (که ما انتظارش را داریم)
-          # '|| true' به CI می‌گوید که این خطا را نادیده بگیرد و ادامه دهد
-          flutter build ipa --release --no-codesign --build-number=$BUILD_NUMBER || true
+          # فلگ --build-number حذف شد زیرا نامعتبر بود
+          # این دستور آرشیو را می‌سازد اما در مرحله Export شکست می‌خورد (که طبیعی است)
+          flutter build ipa --release --no-codesign || true
       - name: Create ExportOptions.plist
         script: |
-          # ما فایل تنظیمات Export را می‌سازیم
+          # فایل تنظیمات Export را می‌سازیم
           echo '<?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -35,7 +34,7 @@ workflows:
           </plist>' > ExportOptions.plist
       - name: Export unsigned IPA
         script: |
-          # حالا ما به صورت دستی آن آرشیوی که در مرحله قبل ساخته شد را Export می‌کنیم
+          # حالا آرشیوی که در مرحله قبل ساخته شد را به صورت دستی Export می‌کنیم
           xcodebuild -exportArchive \
             -archivePath build/ios/archive/Runner.xcarchive \
             -exportPath build/ios/ipa \
