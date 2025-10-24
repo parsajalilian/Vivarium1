@@ -20,7 +20,7 @@ class AppTheme {
         primary: _primary,
         secondary: _accent,
       ),
-      bottomAppBarTheme: const BottomAppBarTheme(
+      bottomAppBarTheme: const BottomAppBarThemeData(
         color: Color(0xFF1F2937),
         elevation: 0,
       ),
@@ -42,7 +42,7 @@ class AppTheme {
         primary: _primary,
         secondary: _accent,
       ),
-      bottomAppBarTheme: const BottomAppBarTheme(
+      bottomAppBarTheme: const BottomAppBarThemeData(
         color: Color(0xFF1F2937),
         elevation: 0,
       ),
