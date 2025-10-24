@@ -12,13 +12,15 @@ workflows:
           cd ios
           pod install --repo-update
           cd ..
-      - name: Build Flutter iOS Framework
-        script: |
-          # این دستور فریم‌ورک فلاتر را در حالت release می‌سازد
-          flutter build ios --release --no-codesign
+          
+          # <<<<<<< این مرحله که خطا می‌داد حذف شد >>>>>>>>>
+          # - name: Build Flutter iOS Framework
+          #   script: |
+          #     flutter build ios --release --no-codesign 
+
       - name: Build Xcode Archive (unsigned)
         script: |
-          # این دستور اصلی Xcode برای ساخت آرشیو بدون امضاست
+          # این دستور مستقیماً آرشیو می‌سازد و خودش فلاتر را بیلد می‌کند
           cd ios
           xcodebuild archive \
             -workspace Runner.xcworkspace \
@@ -30,7 +32,6 @@ workflows:
           cd ..
       - name: Create ExportOptions.plist
         script: |
-          # ما یک فایل تنظیمات برای مرحله Export می‌سازیم
           echo '<?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
