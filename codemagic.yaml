@@ -12,7 +12,7 @@ workflows:
           cd ios
           pod install --repo-update
           cd ..
-      - name: Build unsigned IPA
-        script: flutter build ipa --release --no-codesign --build-number=$BUILD_NUMBER
+      - name: Build unsigned IPA (Simulator)
+        script: flutter build ipa --release --no-codesign --simulator --build-number=$BUILD_NUMBER
     artifacts:
       - build/ios/ipa/*.ipa
