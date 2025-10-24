@@ -22,15 +22,15 @@ workflows:
             (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
 
-          # افزودن use_frameworks و use_modular_headers با خط جدید قبل از اضافه شدن
+          # افزودن use_frameworks و use_modular_headers با خط واقعی
           if ! grep -q "use_frameworks!" Podfile; then
-            echo "\nuse_frameworks!" >> Podfile
+            printf "\nuse_frameworks!\n" >> Podfile
           fi
           if ! grep -q "use_modular_headers!" Podfile; then
-            echo "\nuse_modular_headers!" >> Podfile
+            printf "\nuse_modular_headers!\n" >> Podfile
           fi
 
-          # پاکسازی کامل پادها و کش‌ها
+          # پاک‌سازی کامل پادها و کش‌ها
           rm -rf Podfile.lock Pods
           pod cache clean --all
           pod repo update
