@@ -14,7 +14,8 @@ workflows:
           cd ..
       - name: Build Xcode Archive
         script: |
-          flutter build archive --release --build-number=$BUILD_NUMBER
+          # The --release flag is removed, as 'build archive' is release by default
+          flutter build archive --build-number=$BUILD_NUMBER
       - name: Create ExportOptions.plist for unsigned build
         script: |
           echo '<?xml version="1.0" encoding="UTF-8"?>
