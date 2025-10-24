@@ -1,0 +1,5 @@
+<svg class="w-24 h-24 text-ocean mx-auto mb-4" viewBox="0 0 200 200" fill="currentColor">
+                            <circle cx="100" cy="100" r="70" fill="none" stroke="currentColor" stroke-width="4"/>
+                            <path d="M70,90 Q80,85 90,90 Q95,95 90,100 Q80,105 70,100 Q65,95 70,90 Z" fill="currentColor"/>
+                            <circle cx="75" cy="92" r="2" fill="white"/>
+                        </svg>

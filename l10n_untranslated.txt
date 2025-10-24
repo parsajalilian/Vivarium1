@@ -1,0 +1,26 @@
+{
+  "ar": [
+    "themeSystem",
+    "systemWillRun",
+    "every",
+    "lowerHumidityLimit",
+    "upperHumidityLimit"
+  ],
+
+  "fa": [
+    "themeSystem",
+    "systemWillRun",
+    "every",
+    "lowerHumidityLimit",
+    "upperHumidityLimit",
+    "mode",
+    "autoMode",
+    "manualMode",
+    "mistOnCycle",
+    "mistCycleTitle",
+    "mistOffCycle",
+    "deleteDevice",
+    "renameDevice",
+    "ok"
+  ]
+}
