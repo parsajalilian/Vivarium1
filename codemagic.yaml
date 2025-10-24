@@ -39,16 +39,21 @@ workflows:
             printf "\nuse_modular_headers!\n" >> Podfile
           fi
 
-          # 👇 پست اینستال به روش امن برای YAML
-          printf "%s\n" "post_install do |installer|" >> Podfile
-          printf "%s\n" "  installer.pods_project.targets.each do |target|" >> Podfile
-          printf "%s\n" "    target.build_configurations.each do |config|" >> Podfile
-          printf "%s\n" "      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'" >> Podfile
-          printf "%s\n" "      config.build_settings['SWIFT_VERSION'] = '5.0'" >> Podfile
-          printf "%s\n" "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
-          printf "%s\n" "    end" >> Podfile
-          printf "%s\n" "  end" >> Podfile
-          printf "%s\n" "end" >> Podfile
+          # 👇 فقط اگر post_install وجود نداره، بساز
+          if ! grep -q "post_install do" Podfile; then
+            printf "%s\n" "post_install do |installer|" >> Podfile
+            printf "%s\n" "  installer.pods_project.targets.each do |target|" >> Podfile
+            printf "%s\n" "    target.build_configurations.each do |config|" >> Podfile
+            printf "%s\n" "      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'" >> Podfile
+            printf "%s\n" "      config.build_settings['SWIFT_VERSION'] = '5.0'" >> Podfile
+            printf "%s\n" "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
+            printf "%s\n" "    end" >> Podfile
+            printf "%s\n" "  end" >> Podfile
+            printf "%s\n" "end" >> Podfile
+          else
+            # اگر وجود داشت، فقط تنظیمات داخلشو اضافه کن
+            awk '/post_install do/{print;print "  installer.pods_project.targets.each do |target|";print "    target.build_configurations.each do |config|";print "      config.build_settings[\"BUILD_LIBRARY_FOR_DISTRIBUTION\"] = \"YES\"";print "      config.build_settings[\"SWIFT_VERSION\"] = \"5.0\"";print "      config.build_settings[\"IPHONEOS_DEPLOYMENT_TARGET\"] = \"13.0\"";print "    end";print "  end";next}1' Podfile > Podfile.tmp && mv Podfile.tmp Podfile
+          fi
 
           pod repo update
           pod install --repo-update
