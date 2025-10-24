@@ -12,11 +12,42 @@ workflows:
           cd ios
           pod install --repo-update
           cd ..
-      - name: Build unsigned IPA
+      - name: Build Flutter iOS Framework
         script: |
-          # This is the correct command.
-          # It builds an IPA, in release mode, without signing.
-          # It does NOT use --simulator, so it builds for real devices.
-          flutter build ipa --release --no-codesign --build-number=$BUILD_NUMBER
+          # این دستور فریم‌ورک فلاتر را در حالت release می‌سازد
+          flutter build ios --release --no-codesign
+      - name: Build Xcode Archive (unsigned)
+        script: |
+          # این دستور اصلی Xcode برای ساخت آرشیو بدون امضاست
+          cd ios
+          xcodebuild archive \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath ../build/ios/archive/Runner.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO
+          cd ..
+      - name: Create ExportOptions.plist
+        script: |
+          # ما یک فایل تنظیمات برای مرحله Export می‌سازیم
+          echo '<?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>ad-hoc</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict/>
+          </dict>
+          </plist>' > ExportOptions.plist
+      - name: Export unsigned IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
