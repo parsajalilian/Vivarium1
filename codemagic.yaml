@@ -1,0 +1,18 @@
+workflows:
+  ios_unsigned_for_sibapp:
+    name: iOS Unsigned IPA (SibApp)
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install --repo-update
+          cd ..
+      - name: Build unsigned IPA
+        script: flutter build ipa --release --no-codesign --build-number=$BUILD_NUMBER
+    artifacts:
+      - build/ios/ipa/*.ipa
