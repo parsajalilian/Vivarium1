@@ -1,51 +1,31 @@
 workflows:
-  ios_unsigned_for_sibapp:
-    name: iOS Unsigned IPA (SibApp)
+  unsigned_ipa_for_sibapp:
+    name: Unsigned IPA for SibApp
     environment:
       flutter: stable
       xcode: latest
     scripts:
-      - name: Flutter pub get
-        script: flutter pub get
-      - name: Install CocoaPods
+      - name: Prepare
         script: |
+          set -e
+          set -x
+          flutter clean
+          flutter pub get
           cd ios
-          pod install --repo-update
+          pod repo update
+          pod install
           cd ..
-      - name: Build Xcode Archive (unsigned)
+      - name: Build iOS (no codesign)
         script: |
-          # ما مستقیماً از دستور Xcode استفاده می‌کنیم
-          # و با فلگ‌های زیر، تمام نیازمندی‌های امضا را غیرفعال می‌کنیم
-          cd ios
-          xcodebuild archive \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath ../build/ios/archive/Runner.xcarchive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER=""
-          cd ..
-      - name: Create ExportOptions.plist
-        script: |
-          echo '<?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>ad-hoc</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict/>
-          </dict>
-          </plist>' > ExportOptions.plist
-      - name: Export unsigned IPA
-        script: |
-          xcodebuild -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            -exportPath build/ios/ipa \
-            -exportOptionsPlist ExportOptions.plist
+          set -e
+          set -x
+          # بیلد مخصوص دیوایس (arm64) بدون امضا
+          flutter build ios --release --no-codesign
+
+          # ساخت دستی IPA: Payload/Runner.app → zip
+          rm -rf build/ios/ipa
+          mkdir -p build/ios/ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+          (cd build/ios/ipa && zip -r Runner.ipa Payload)
     artifacts:
-      - build/ios/ipa/*.ipa
+      - build/ios/ipa/Runner.ipa
