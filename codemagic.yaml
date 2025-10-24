@@ -39,61 +39,58 @@ workflows:
             printf "\nuse_modular_headers!\n" >> Podfile
           fi
 
-          # 👇 افزودن پست اینستال برای location plugin (با pipe-safe)
-          echo "
-  post_install do |installer|
-  installer.pods_project.targets.each do |target|
-  target.build_configurations.each do |config|
-  config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
-  config.build_settings['SWIFT_VERSION'] = '5.0'
-  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-  end
-  end
-  end
-  " >> Podfile
+          # 👇 پست اینستال به روش امن برای YAML
+          printf "%s\n" "post_install do |installer|" >> Podfile
+          printf "%s\n" "  installer.pods_project.targets.each do |target|" >> Podfile
+          printf "%s\n" "    target.build_configurations.each do |config|" >> Podfile
+          printf "%s\n" "      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'" >> Podfile
+          printf "%s\n" "      config.build_settings['SWIFT_VERSION'] = '5.0'" >> Podfile
+          printf "%s\n" "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
+          printf "%s\n" "    end" >> Podfile
+          printf "%s\n" "  end" >> Podfile
+          printf "%s\n" "end" >> Podfile
 
           pod repo update
           pod install --repo-update
 
-          # ایجاد Bridging Header در صورت عدم وجود
           if [ ! -f "Runner/Runner-Bridging-Header.h" ]; then
-  echo "// Auto-created Bridging Header" > Runner/Runner-Bridging-Header.h
-  echo "#import \"GeneratedPluginRegistrant.h\"" >> Runner/Runner-Bridging-Header.h
-  fi
-  
-  cd ..
+            echo "// Auto-created Bridging Header" > Runner/Runner-Bridging-Header.h
+            echo "#import \"GeneratedPluginRegistrant.h\"" >> Runner/Runner-Bridging-Header.h
+          fi
 
-- name: Re-generate Flutter registrant
-  script: |
-    set -e
-    set -x
-    flutter pub get
-    flutter build ios --simulator --no-codesign || true
+          cd ..
 
-- name: Build Runner.app (unsigned)
-  script: |
-    set -e
-    set -x
-    flutter build bundle
-    
-    xcodebuild -workspace ios/Runner.xcworkspace \
-               -scheme Runner \
-               -configuration Release \
-               -sdk iphoneos \
-               BUILD_DIR=build/ios \
-               CODE_SIGN_IDENTITY="" \
-               CODE_SIGNING_REQUIRED=NO \
-               CODE_SIGNING_ALLOWED=NO \
-               clean build
+      - name: Re-generate Flutter registrant
+        script: |
+          set -e
+          set -x
+          flutter pub get
+          flutter build ios --simulator --no-codesign || true
 
-- name: Create unsigned IPA
-  script: |
-    set -e
-    set -x
-    rm -rf build/ios/ipa
-    mkdir -p build/ios/ipa/Payload
-    cp -R build/ios/Release-iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
-    (cd build/ios/ipa && zip -r Runner.ipa Payload)
+      - name: Build Runner.app (unsigned)
+        script: |
+          set -e
+          set -x
+          flutter build bundle
 
-artifacts:
-  - build/ios/ipa/Runner.ipa
+          xcodebuild -workspace ios/Runner.xcworkspace \
+                     -scheme Runner \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     BUILD_DIR=build/ios \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     clean build
+
+      - name: Create unsigned IPA
+        script: |
+          set -e
+          set -x
+          rm -rf build/ios/ipa
+          mkdir -p build/ios/ipa/Payload
+          cp -R build/ios/Release-iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+          (cd build/ios/ipa && zip -r Runner.ipa Payload)
+
+    artifacts:
+      - build/ios/ipa/Runner.ipa
