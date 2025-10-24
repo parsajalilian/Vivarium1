@@ -5,7 +5,7 @@ workflows:
       flutter: stable
       xcode: latest
     scripts:
-      - name: Prepare (Flutter + CocoaPods, iOS 13)
+      - name: Prepare (Flutter + CocoaPods full clean)
         script: |
           set -e
           set -x
@@ -14,22 +14,42 @@ workflows:
           flutter pub get
 
           cd ios
+
+          # حداقل نسخه iOS را به 13.0 تنظیم می‌کنیم
           if grep -Eq "^[[:space:]]*platform :ios" Podfile; then
             sed -E -i '' "s/^[[:space:]]*platform :ios.*/platform :ios, '13.0'/" Podfile
           else
             (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
 
-          pod deintegrate || true
+          # فعال‌سازی use_frameworks و use_modular_headers برای پلاگین‌های Swift (مثل location)
+          if ! grep -q "use_frameworks!" Podfile; then
+            echo "use_frameworks!" >> Podfile
+          fi
+          if ! grep -q "use_modular_headers!" Podfile; then
+            echo "use_modular_headers!" >> Podfile
+          fi
+
+          # پاک‌سازی کامل پادها و کش‌ها
+          rm -rf Podfile.lock Pods
+          pod cache clean --all
           pod repo update
           pod install --repo-update
+
+          # ساخت فایل Bridging Header اگر وجود ندارد
+          if [ ! -f "Runner/Runner-Bridging-Header.h" ]; then
+            echo "// Auto-created Bridging Header for Swift Plugins" > Runner/Runner-Bridging-Header.h
+            echo "#import \"GeneratedPluginRegistrant.h\"" >> Runner/Runner-Bridging-Header.h
+          fi
+
           cd ..
-      - name: Build Runner.app manually (no Xcode archive)
+
+      - name: Build Runner.app (no code signing)
         script: |
           set -e
           set -x
 
-          # ساخت Runner.app مستقیماً از flutter build bundle + xcodebuild
+          # ساخت اپ بدون امضا با Xcode
           flutter build bundle
           rm -rf build/ios/Release-iphoneos
           xcodebuild -workspace ios/Runner.xcworkspace \
@@ -42,7 +62,7 @@ workflows:
                      CODE_SIGNING_ALLOWED=NO \
                      clean build
 
-      - name: Create IPA (unsigned)
+      - name: Create unsigned IPA
         script: |
           set -e
           set -x
