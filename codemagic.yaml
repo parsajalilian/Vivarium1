@@ -9,35 +9,37 @@ workflows:
         script: |
           set -e
           set -x
+
           flutter clean
           flutter pub get
 
           cd ios
-          # force iOS 13.0 in Podfile
-          if grep -q "^platform :ios" Podfile; then
-            sed -i '' "s/^platform :ios.*/platform :ios, '13.0'/" Podfile
+
+          # ست‌کردن platform به iOS 13.0 در Podfile (با درنظرگرفتن فاصله ابتدای خط)
+          if grep -Eq "^[[:space:]]*platform :ios" Podfile; then
+            sed -E -i '' "s/^[[:space:]]*platform :ios.*/platform :ios, '13.0'/" Podfile
           else
-            (echo "platform :ios, '13.0'"; cat Podfile) > Podfile.tmp && mv Podfile.tmp Podfile
+            (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
-          # align Flutter framework minimum OS (ignore if path changes)
-          /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion 13.0" Flutter/AppFrameworkInfo.plist  true
 
           # CocoaPods
+          pod deintegrate || true
           pod repo update
-          pod install  (pod deintegrate && pod install --repo-update)
-          cd ..
+          pod install --repo-update
 
+          cd ..
       - name: Build iOS (no codesign)
         script: |
           set -e
           set -x
-          # build for device (arm64) without codesign
-          flutter build ios --release --no-codesign
 
+          # بیلد برای دیوایس (arm64) بدون امضا
+          flutter build ios --release --no-codesign
       - name: Create IPA
         script: |
           set -e
           set -x
+
           rm -rf build/ios/ipa
           mkdir -p build/ios/ipa/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
