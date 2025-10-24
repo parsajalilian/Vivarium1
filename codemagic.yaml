@@ -15,21 +15,18 @@ workflows:
           flutter pub get
           flutter precache --ios
 
-          # پاک‌سازی کامل iOS
           rm -rf ios/Flutter/Flutter.podspec ios/Podfile.lock ios/Pods ios/.symlinks
           rm -rf ios/Runner/GeneratedPluginRegistrant.*
           flutter pub get
 
           cd ios
 
-          # تنظیم حداقل نسخه iOS
           if grep -Eq "^[[:space:]]*platform :ios" Podfile; then
             sed -E -i '' "s/^[[:space:]]*platform :ios.*/platform :ios, '13.0'/" Podfile
           else
             (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
 
-          # تنظیمات CocoaPods
           if ! grep -q "install! 'cocoapods'" Podfile; then
             printf "\ninstall! 'cocoapods', :disable_input_output_paths => true\n" >> Podfile
           fi
@@ -40,10 +37,9 @@ workflows:
             printf "\nuse_modular_headers!\n" >> Podfile
           fi
 
-          # پچ مخصوص پلاگین location
+          # 👇 اضافه کردن post_install با قالب چندخطی صحیح
           if ! grep -q "post_install do" Podfile; then
             cat >> Podfile <<'EOF'
-
   post_install do |installer|
   installer.pods_project.targets.each do |target|
   target.build_configurations.each do |config|
@@ -59,7 +55,6 @@ workflows:
   pod repo update
   pod install --repo-update
   
-  # ایجاد Bridging Header در صورت عدم وجود
   if [ ! -f "Runner/Runner-Bridging-Header.h" ]; then
   echo "// Auto-created Bridging Header" > Runner/Runner-Bridging-Header.h
   echo "#import \"GeneratedPluginRegistrant.h\"" >> Runner/Runner-Bridging-Header.h
