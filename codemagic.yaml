@@ -5,27 +5,43 @@ workflows:
       flutter: stable
       xcode: latest
     scripts:
-      - name: Prepare
+      - name: Prepare (Flutter + CocoaPods, set iOS 13)
         script: |
           set -e
           set -x
           flutter clean
           flutter pub get
+
           cd ios
+          # force iOS 13.0 in Podfile
+          if grep -q "^platform :ios" Podfile; then
+            sed -i '' "s/^platform :ios.*/platform :ios, '13.0'/" Podfile
+          else
+            (echo "platform :ios, '13.0'"; cat Podfile) > Podfile.tmp && mv Podfile.tmp Podfile
+          fi
+          # align Flutter framework minimum OS (ignore if path changes)
+          /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion 13.0" Flutter/AppFrameworkInfo.plist  true
+
+          # CocoaPods
           pod repo update
-          pod install
+          pod install  (pod deintegrate && pod install --repo-update)
           cd ..
+
       - name: Build iOS (no codesign)
         script: |
           set -e
           set -x
-          # بیلد مخصوص دیوایس (arm64) بدون امضا
+          # build for device (arm64) without codesign
           flutter build ios --release --no-codesign
 
-          # ساخت دستی IPA: Payload/Runner.app → zip
+      - name: Create IPA
+        script: |
+          set -e
+          set -x
           rm -rf build/ios/ipa
           mkdir -p build/ios/ipa/Payload
           cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
           (cd build/ios/ipa && zip -r Runner.ipa Payload)
+
     artifacts:
       - build/ios/ipa/Runner.ipa
