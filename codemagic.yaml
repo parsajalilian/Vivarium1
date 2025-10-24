@@ -12,14 +12,23 @@ workflows:
           cd ios
           pod install --repo-update
           cd ..
-      - name: Build Xcode Archive (and ignore expected export error)
+      - name: Build Xcode Archive (unsigned)
         script: |
-          # فلگ --build-number حذف شد زیرا نامعتبر بود
-          # این دستور آرشیو را می‌سازد اما در مرحله Export شکست می‌خورد (که طبیعی است)
-          flutter build ipa --release --no-codesign || true
+          # ما مستقیماً از دستور Xcode استفاده می‌کنیم
+          # و با فلگ‌های زیر، تمام نیازمندی‌های امضا را غیرفعال می‌کنیم
+          cd ios
+          xcodebuild archive \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath ../build/ios/archive/Runner.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            PROVISIONING_PROFILE_SPECIFIER=""
+          cd ..
       - name: Create ExportOptions.plist
         script: |
-          # فایل تنظیمات Export را می‌سازیم
           echo '<?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -34,7 +43,6 @@ workflows:
           </plist>' > ExportOptions.plist
       - name: Export unsigned IPA
         script: |
-          # حالا آرشیوی که در مرحله قبل ساخته شد را به صورت دستی Export می‌کنیم
           xcodebuild -exportArchive \
             -archivePath build/ios/archive/Runner.xcarchive \
             -exportPath build/ios/ipa \
