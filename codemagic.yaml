@@ -15,22 +15,22 @@ workflows:
 
           cd ios
 
-          # حداقل نسخه iOS را به 13.0 تنظیم می‌کنیم
+          # تنظیم حداقل نسخه iOS
           if grep -Eq "^[[:space:]]*platform :ios" Podfile; then
             sed -E -i '' "s/^[[:space:]]*platform :ios.*/platform :ios, '13.0'/" Podfile
           else
             (printf "platform :ios, '13.0'\n%s" "$(cat Podfile)") > Podfile.tmp && mv Podfile.tmp Podfile
           fi
 
-          # فعال‌سازی use_frameworks و use_modular_headers برای پلاگین‌های Swift (مثل location)
+          # افزودن use_frameworks و use_modular_headers با خط جدید قبل از اضافه شدن
           if ! grep -q "use_frameworks!" Podfile; then
-            echo "use_frameworks!" >> Podfile
+            echo "\nuse_frameworks!" >> Podfile
           fi
           if ! grep -q "use_modular_headers!" Podfile; then
-            echo "use_modular_headers!" >> Podfile
+            echo "\nuse_modular_headers!" >> Podfile
           fi
 
-          # پاک‌سازی کامل پادها و کش‌ها
+          # پاکسازی کامل پادها و کش‌ها
           rm -rf Podfile.lock Pods
           pod cache clean --all
           pod repo update
