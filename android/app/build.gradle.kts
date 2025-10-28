@@ -19,18 +19,18 @@ android {
 
     defaultConfig {
         applicationId = "com.example.aquaviva"
-        minSdk = (rootProject.extra.get("flutter.minSdkVersion") as String).toInt()
-        targetSdk = (rootProject.extra.get("flutter.targetSdkVersion") as String).toInt()
-        versionCode = (rootProject.extra.get("flutter.versionCode") as String).toInt()
-        versionName = rootProject.extra.get("flutter.versionName") as String
+        minSdk = (rootProject.extra["flutter.minSdkVersion"] as? String ?: "23").toInt()
+        targetSdk = (rootProject.extra["flutter.targetSdkVersion"] as? String ?: "35").toInt()
+        versionCode = (rootProject.extra["flutter.versionCode"] as? String ?: "1").toInt()
+        versionName = rootProject.extra["flutter.versionName"] as? String ?: "1.0.0"
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file(rootProject.extra.get("KEYSTORE_FILE") as String)
-            storePassword = rootProject.extra.get("KEYSTORE_PASSWORD") as String
-            keyAlias = rootProject.extra.get("KEY_ALIAS") as String
-            keyPassword = rootProject.extra.get("KEY_PASSWORD") as String
+            storeFile = file(rootProject.extra["KEYSTORE_FILE"] as? String ?: "keystore.jks")
+            storePassword = rootProject.extra["KEYSTORE_PASSWORD"] as? String ?: ""
+            keyAlias = rootProject.extra["KEY_ALIAS"] as? String ?: ""
+            keyPassword = rootProject.extra["KEY_PASSWORD"] as? String ?: ""
         }
     }
 
