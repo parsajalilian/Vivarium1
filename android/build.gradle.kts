@@ -1,79 +1,45 @@
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
 
-// <<<<<<< 1. این قسمت برای خواندن local.properties اضافه شده است >>>>>>>>>
-val localPropertiesFile = rootProject.file("../android/local.properties")
 val localProperties = Properties()
+val localPropertiesFile = project.file("local.properties")
 if (localPropertiesFile.exists()) {
-    localProperties.load(FileInputStream(localPropertiesFile))
-}
-// <<<<<<< پایان قسمت 1 >>>>>>>>>
-
-
-plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    // id("dev.flutter.flutter-gradle-plugin") // این خط همانطور که گفتیم حذف می‌ماند
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 
-// <<<<<<< 2. این قسمت برای خواندن key.properties (امضا) است >>>>>>>>>
-val keystorePropertiesFile = rootProject.file("../android/key.properties")
 val keystoreProperties = Properties()
+val keystorePropertiesFile = project.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
-// <<<<<<< پایان قسمت 2 >>>>>>>>>
 
+extra.apply {
+    set("flutter.ndkVersion", localProperties.getProperty("flutter.ndkVersion"))
+    set("flutter.minSdkVersion", localProperties.getProperty("flutter.minSdkVersion"))
+    set("flutter.targetSdkVersion", localProperties.getProperty("flutter.targetSdkVersion"))
+    set("flutter.versionCode", localProperties.getProperty("flutter.versionCode"))
+    set("flutter.versionName", localProperties.getProperty("flutter.versionName"))
 
-android {
-    namespace = "com.example.aquaviva"
+    set("KEYSTORE_FILE", keystoreProperties.getProperty("storeFile"))
+    set("KEYSTORE_PASSWORD", keystoreProperties.getProperty("storePassword"))
+    set("KEY_ALIAS", keystoreProperties.getProperty("keyAlias"))
+    set("KEY_PASSWORD", keystoreProperties.getProperty("keyPassword"))
+}
 
-    // <<<<<<< 3. مقادیر از local.properties خوانده می‌شوند >>>>>>>>>
-    compileSdk = 35 // این مقدار ثابت است
-    ndkVersion = localProperties.getProperty("flutter.ndkVersion")
-    // <<<<<<< پایان قسمت 3 >>>>>>>>>
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
     }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
-    defaultConfig {
-        applicationId = "com.example.aquaviva"
-
-        // <<<<<<< 4. مقادیر از local.properties خوانده می‌شوند >>>>>>>>>
-        minSdk = localProperties.getProperty("flutter.minSdkVersion").toInt()
-        targetSdk = localProperties.getProperty("flutter.targetSdkVersion").toInt()
-        versionCode = localProperties.getProperty("flutter.versionCode").toInt()
-        versionName = localProperties.getProperty("flutter.versionName")
-        // <<<<<<< پایان قسمت 4 >>>>>>>>>
-    }
-
-    // <<<<<<< 5. قسمت امضا (این قسمت صحیح بود) >>>>>>>>>
-    signingConfigs {
-        create("release") {
-            if (keystorePropertiesFile.exists()) {
-                storeFile = file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-            }
-        }
-    }
-    // <<<<<<< پایان قسمت 5 >>>>>>>>>
-
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("release")
-        }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.4.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
     }
 }
 
-// <<<<<<< 6. بلوک flutter { ... } در این ساختار جدید حذف می‌شود >>>>>>>>>
-// flutter {
-//     source = "../.."
-// }
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}

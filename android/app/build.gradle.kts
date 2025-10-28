@@ -1,19 +1,12 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    kotlin("android")
     id("dev.flutter.flutter-gradle-plugin")
 }
-
-def keystorePropertiesFile = rootProject.file('../android/key.properties')
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
 android {
     namespace = "com.example.aquaviva"
     compileSdk = 35
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "26.1.10909125"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -26,31 +19,29 @@ android {
 
     defaultConfig {
         applicationId = "com.example.aquaviva"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdk = (rootProject.extra.get("flutter.minSdkVersion") as String).toInt()
+        targetSdk = (rootProject.extra.get("flutter.targetSdkVersion") as String).toInt()
+        versionCode = (rootProject.extra.get("flutter.versionCode") as String).toInt()
+        versionName = rootProject.extra.get("flutter.versionName") as String
     }
 
     signingConfigs {
-        release {
-            if (keystorePropertiesFile.exists()) {
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-            }
+        create("release") {
+            storeFile = file(rootProject.extra.get("KEYSTORE_FILE") as String)
+            storePassword = rootProject.extra.get("KEYSTORE_PASSWORD") as String
+            keyAlias = rootProject.extra.get("KEY_ALIAS") as String
+            keyPassword = rootProject.extra.get("KEY_PASSWORD") as String
         }
     }
 
     buildTypes {
         release {
-
-            signingConfig signingConfigs.release // این خط امضای release را فعال می‌کند
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+            )
         }
     }
-}
-
-flutter {
-    source = "../.."
 }
